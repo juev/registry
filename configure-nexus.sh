@@ -108,8 +108,8 @@ create_docker_repository() {
             "writePolicy": "ALLOW"
         },
         "docker": {
-            "v1Enabled": false,
-            "forceBasicAuth": false,
+            "v1Enabled": true,
+            "forceBasicAuth": true,
             "httpPort": '$DOCKER_PORT',
             "httpsPort": null,
             "subdomain": null
@@ -126,10 +126,48 @@ create_docker_repository() {
         print_status "Docker repository '$REPO_NAME' created successfully!"
         return 0
     elif [ "$http_code" = "400" ]; then
-        print_warning "Repository '$REPO_NAME' may already exist or configuration error"
-        return 1
+        print_warning "Repository '$REPO_NAME' may already exist, attempting to update..."
+        update_docker_repository
+        return $?
     else
         print_error "Failed to create repository. HTTP code: $http_code"
+        echo "Response: $(echo "$response" | cut -d':' -f2-)"
+        return 1
+    fi
+}
+
+# Function to update existing Docker repository with correct settings
+update_docker_repository() {
+    print_status "Updating Docker repository '$REPO_NAME' configuration..."
+    
+    local repo_config='{
+        "name": "'$REPO_NAME'",
+        "online": true,
+        "storage": {
+            "blobStoreName": "default",
+            "strictContentTypeValidation": true,
+            "writePolicy": "ALLOW"
+        },
+        "docker": {
+            "v1Enabled": true,
+            "forceBasicAuth": true,
+            "httpPort": '$DOCKER_PORT',
+            "httpsPort": null,
+            "subdomain": null
+        },
+        "component": {
+            "proprietaryComponents": true
+        }
+    }'
+    
+    local response=$(nexus_api_call "PUT" "/service/rest/v1/repositories/docker/hosted/$REPO_NAME" "$repo_config")
+    local http_code=$(echo "$response" | cut -d':' -f1)
+    
+    if [ "$http_code" = "204" ]; then
+        print_status "Docker repository '$REPO_NAME' updated successfully!"
+        return 0
+    else
+        print_error "Failed to update repository. HTTP code: $http_code"
         echo "Response: $(echo "$response" | cut -d':' -f2-)"
         return 1
     fi
@@ -163,11 +201,11 @@ configure_security_realms() {
     fi
 }
 
-# Function to create anonymous access role and user
+# Function to configure anonymous access and fix authorization issues
 configure_anonymous_access() {
     print_status "Configuring anonymous access for Docker pulls..."
     
-    # First, check if anonymous user is enabled
+    # Step 1: Enable anonymous access
     local response=$(nexus_api_call "GET" "/service/rest/v1/security/anonymous")
     local http_code=$(echo "$response" | cut -d':' -f1)
     
@@ -194,7 +232,31 @@ configure_anonymous_access() {
         fi
     fi
     
-    # Create or update Docker pull privilege
+    # Step 2: Fix anonymous user by assigning proper roles
+    print_status "Configuring anonymous user with proper roles..."
+    local anonymous_user_config='{
+        "userId": "anonymous",
+        "firstName": "Anonymous",
+        "lastName": "User", 
+        "emailAddress": "anonymous@example.org",
+        "source": "default",
+        "status": "active",
+        "readOnly": false,
+        "roles": ["nx-anonymous"],
+        "externalRoles": []
+    }'
+    
+    response=$(nexus_api_call "PUT" "/service/rest/v1/security/users/anonymous" "$anonymous_user_config")
+    http_code=$(echo "$response" | cut -d':' -f1)
+    
+    if [ "$http_code" = "200" ]; then
+        print_status "Anonymous user configured with nx-anonymous role!"
+    else
+        print_warning "Failed to configure anonymous user. HTTP code: $http_code"
+        echo "Response: $(echo "$response" | cut -d':' -f2-)"
+    fi
+    
+    # Step 3: Create or update Docker pull privilege (optional, as nx-anonymous should cover this)
     print_status "Creating Docker pull privilege..."
     local privilege_config='{
         "name": "docker-registry-pull",
@@ -212,25 +274,6 @@ configure_anonymous_access() {
         print_status "Docker pull privilege created successfully!"
     elif [ "$http_code" = "400" ]; then
         print_warning "Docker pull privilege may already exist"
-    fi
-    
-    # Create anonymous role with Docker pull privileges
-    print_status "Creating anonymous Docker role..."
-    local role_config='{
-        "id": "docker-anonymous",
-        "name": "docker-anonymous",
-        "description": "Anonymous Docker access role",
-        "privileges": ["docker-registry-pull", "nx-repository-view-docker-docker-registry-browse", "nx-repository-view-docker-docker-registry-read"],
-        "roles": []
-    }'
-    
-    response=$(nexus_api_call "POST" "/service/rest/v1/security/roles" "$role_config")
-    http_code=$(echo "$response" | cut -d':' -f1)
-    
-    if [ "$http_code" = "200" ]; then
-        print_status "Anonymous Docker role created successfully!"
-    elif [ "$http_code" = "400" ]; then
-        print_warning "Anonymous Docker role may already exist"
     fi
 }
 

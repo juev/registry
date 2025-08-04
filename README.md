@@ -60,15 +60,17 @@ This will:
 2. Wait for Nexus to be ready
 3. Automatically configure Docker registry via REST API
 4. Create a Docker hosted repository named "docker-registry"
-5. Configure it to listen on port 8082
-6. Enable anonymous Docker pull access
-7. Set up appropriate security realms
+5. Configure it to listen on port 8082 with forceBasicAuth enabled
+6. Configure anonymous user with proper nx-anonymous role assignment
+7. Set up appropriate security realms and authentication
 
 **🔧 After running the script:**
 1. Go to http://localhost:8081  
 2. Login as admin/admin123
 3. Complete Setup Wizard and accept EULA
-4. Verify: `curl http://localhost:8082/v2/`
+4. Verify: `curl http://localhost:8082/v2/` (should return `{}` or require authentication)
+
+**✅ Authentication Fixed:** The script now automatically resolves the anonymous user authorization issues that previously caused "unauthorized" errors during Docker push operations.
 
 ### Manual Configuration (Alternative)
 
@@ -247,8 +249,9 @@ docker history localhost:8082/nexus-test:latest
    - Ensure ports 8081 and 8082 are available
 
 6. **Push fails with "unauthorized"**
-   - Enable "Allow anonymous docker pull" in repository settings
-   - Or configure proper authentication
+   - Run `./configure-nexus.sh` to automatically fix anonymous user permissions
+   - The script assigns the nx-anonymous role to the anonymous user
+   - Alternatively, manually enable "Allow anonymous docker pull" in repository settings
 
 ### Resource Requirements
 
