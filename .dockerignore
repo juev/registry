@@ -1,0 +1,36 @@
+# Docker Compose files
+docker-compose.yml
+docker-compose.*.yml
+
+# Documentation
+*.md
+README*
+
+# Git
+.git
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Nexus data directory (if present)
+nexus-data/
+nexus-config/
+
+# Scripts (not needed in container)
+setup.sh

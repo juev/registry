@@ -1,0 +1,12 @@
+{
+  "insecure-registries": [
+    "localhost:8082",
+    "127.0.0.1:8082"
+  ],
+  "registry-mirrors": [],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
