@@ -37,7 +37,10 @@ This project sets up a Nexus Repository Manager 3 instance configured for Docker
      docker exec nexus-registry cat /nexus-data/admin.password
      ```
 
-4. **Complete the setup wizard** and set a new admin password
+4. **🚨 IMPORTANT: Complete the setup wizard** and set a new admin password
+   - **You MUST accept the EULA (End User License Agreement)**
+   - Configure Anonymous Access (recommended to enable)
+   - Without accepting EULA, Docker registry on port 8082 will not work
 
 ## Configure Docker Registry
 
@@ -49,6 +52,8 @@ The setup script now automatically configures Nexus via REST API:
 ./setup.sh
 ```
 
+**⚠️ Note:** Automated configuration will create the Docker repository, but **EULA must be accepted manually via web interface** to activate port 8082.
+
 This will:
 
 1. Start Nexus container
@@ -58,6 +63,12 @@ This will:
 5. Configure it to listen on port 8082
 6. Enable anonymous Docker pull access
 7. Set up appropriate security realms
+
+**🔧 After running the script:**
+1. Go to http://localhost:8081  
+2. Login as admin/admin123
+3. Complete Setup Wizard and accept EULA
+4. Verify: `curl http://localhost:8082/v2/`
 
 ### Manual Configuration (Alternative)
 
@@ -206,21 +217,36 @@ docker history localhost:8082/nexus-test:latest
 
 ### Common Issues
 
-1. **"connection refused" when pushing**
+1. **🚨 "EULA not accepted" or port 8082 unavailable**
+   - **Solution:** Open http://localhost:8081 in browser
+   - Login as admin/admin123
+   - Complete Setup Wizard and **must accept EULA**
+   - Verify: `curl http://localhost:8082/v2/`
+
+2. **"connection refused" when pushing**
    - Ensure Nexus is fully started (check logs)
    - Verify Docker registry repository is created
    - Check insecure-registries configuration
+   - **Make sure EULA is accepted (see #1)**
 
-2. **Authentication errors**
+3. **Repository creation errors via API**
+   ```
+   [WARN] Repository 'docker-registry' may already exist or configuration error
+   [ERROR] Failed to create Docker repository
+   ```
+   - **This is normal!** Repository is created, but EULA not accepted
+   - Solution: accept EULA via web interface
+
+4. **Authentication errors**
    - Verify credentials with `docker login localhost:8082`
    - Check repository permissions in Nexus
 
-3. **Nexus won't start**
+5. **Nexus won't start**
    - Check available memory (Nexus needs ~2GB)
    - View logs: `docker-compose logs nexus`
    - Ensure ports 8081 and 8082 are available
 
-4. **Push fails with "unauthorized"**
+6. **Push fails with "unauthorized"**
    - Enable "Allow anonymous docker pull" in repository settings
    - Or configure proper authentication
 

@@ -261,7 +261,16 @@ verify_configuration() {
     if curl -f -s "http://localhost:$DOCKER_PORT/v2/" > /dev/null 2>&1; then
         print_status "✓ Docker registry is accessible on port $DOCKER_PORT"
     else
-        print_warning "✗ Docker registry may not be accessible on port $DOCKER_PORT (this is normal if container port mapping is not ready)"
+        print_error "✗ Docker registry is NOT accessible on port $DOCKER_PORT"
+        print_error "🚨 MANUAL ACTION REQUIRED: EULA not accepted!"
+        echo ""
+        echo "To activate Docker registry on port $DOCKER_PORT:"
+        echo "1. Open in browser: $NEXUS_URL"
+        echo "2. Login: admin/admin123"
+        echo "3. Complete Setup Wizard and MUST accept EULA"
+        echo "4. Verify: curl http://localhost:$DOCKER_PORT/v2/"
+        echo ""
+        print_warning "Docker repository created but blocked until EULA acceptance"
     fi
     
     # Check anonymous access
@@ -325,19 +334,37 @@ main() {
     echo "- Anonymous Pull: Enabled"
     echo "- Docker Token Auth: Disabled"
     echo ""
-    echo "Test your registry:"
-    echo "1. Pull a test image:"
-    echo "   docker pull hello-world"
-    echo ""
-    echo "2. Tag it for your registry:"
-    echo "   docker tag hello-world localhost:$DOCKER_PORT/hello-world:latest"
-    echo ""
-    echo "3. Push to your registry:"
-    echo "   docker push localhost:$DOCKER_PORT/hello-world:latest"
-    echo ""
-    echo "4. Pull from your registry:"
-    echo "   docker pull localhost:$DOCKER_PORT/hello-world:latest"
-    echo ""
+    
+    # Check if EULA needs to be accepted
+    if ! curl -f -s "http://localhost:$DOCKER_PORT/v2/" > /dev/null 2>&1; then
+        print_error "🚨 IMPORTANT: You need to accept EULA to complete setup!"
+        echo ""
+        echo "NEXT STEPS:"
+        echo "1. Open in browser: $NEXUS_URL"
+        echo "2. Login: admin/admin123"
+        echo "3. Complete Setup Wizard and MUST accept EULA"
+        echo "4. After accepting EULA verify: curl http://localhost:$DOCKER_PORT/v2/"
+        echo ""
+        print_warning "Docker registry will be blocked until EULA acceptance"
+        echo ""
+    else
+        echo "✅ Docker registry is ready to use!"
+        echo ""
+        echo "Test your registry:"
+        echo "1. Pull a test image:"
+        echo "   docker pull hello-world"
+        echo ""
+        echo "2. Tag it for your registry:"
+        echo "   docker tag hello-world localhost:$DOCKER_PORT/hello-world:latest"
+        echo ""
+        echo "3. Push to your registry:"
+        echo "   docker push localhost:$DOCKER_PORT/hello-world:latest"
+        echo ""
+        echo "4. Pull from your registry:"
+        echo "   docker pull localhost:$DOCKER_PORT/hello-world:latest"
+        echo ""
+    fi
+    
     print_warning "Note: You may need to configure Docker daemon to allow insecure registries:"
     echo "Add \"localhost:$DOCKER_PORT\" to your Docker daemon insecure-registries list"
 }
