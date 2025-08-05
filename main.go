@@ -323,6 +323,11 @@ func fetchImageUsingRemoteImageWithMonitoring(monitor *HTTPMonitor) error {
 		return fmt.Errorf("failed to fetch image using remote.Image(): %w", err)
 	}
 
+	digest, err := img.Digest()
+	if err != nil {
+		return fmt.Errorf("failed to get image digest: %w", err)
+	}
+	log.Printf("Image digest: %s", digest)
 	// Get image manifest
 	log.Println("Retrieving image manifest...")
 	manifest, err := img.Manifest()
@@ -383,7 +388,6 @@ func fetchImageUsingRemoteGetWithMonitoring(monitor *HTTPMonitor) error {
 		return fmt.Errorf("failed to fetch descriptor using remote.Get(): %w", err)
 	}
 
-	log.Printf("Descriptor digest: %s", descriptor.Digest)
 	log.Printf("Descriptor media type: %s", descriptor.MediaType)
 	log.Printf("Descriptor size: %d bytes", descriptor.Size)
 	log.Printf("Descriptor digest: %s", descriptor.Digest)
