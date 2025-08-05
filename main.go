@@ -329,6 +329,7 @@ func fetchImageUsingRemoteImageWithMonitoring(monitor *HTTPMonitor) error {
 	if err != nil {
 		return fmt.Errorf("failed to get manifest: %w", err)
 	}
+	log.Printf("Manifest digest: %s", manifest.Config.Digest)
 	log.Printf("Manifest media type: %s", manifest.MediaType)
 	log.Printf("Manifest schema version: %d", manifest.SchemaVersion)
 	log.Printf("Number of layers: %d", len(manifest.Layers))
@@ -382,6 +383,7 @@ func fetchImageUsingRemoteGetWithMonitoring(monitor *HTTPMonitor) error {
 		return fmt.Errorf("failed to fetch descriptor using remote.Get(): %w", err)
 	}
 
+	log.Printf("Descriptor digest: %s", descriptor.Digest)
 	log.Printf("Descriptor media type: %s", descriptor.MediaType)
 	log.Printf("Descriptor size: %d bytes", descriptor.Size)
 	log.Printf("Descriptor digest: %s", descriptor.Digest)
