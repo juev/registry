@@ -65,7 +65,8 @@ This will:
 7. Set up appropriate security realms and authentication
 
 **🔧 After running the script:**
-1. Go to http://localhost:8081  
+
+1. Go to <http://localhost:8081>  
 2. Login as admin/admin123
 3. Complete Setup Wizard and accept EULA
 4. Verify: `curl http://localhost:8082/v2/` (should return `{}` or require authentication)
@@ -220,7 +221,7 @@ docker history localhost:8082/nexus-test:latest
 ### Common Issues
 
 1. **🚨 "EULA not accepted" or port 8082 unavailable**
-   - **Solution:** Open http://localhost:8081 in browser
+   - **Solution:** Open <http://localhost:8081> in browser
    - Login as admin/admin123
    - Complete Setup Wizard and **must accept EULA**
    - Verify: `curl http://localhost:8082/v2/`
@@ -232,10 +233,12 @@ docker history localhost:8082/nexus-test:latest
    - **Make sure EULA is accepted (see #1)**
 
 3. **Repository creation errors via API**
-   ```
+
+   ```plain
    [WARN] Repository 'docker-registry' may already exist or configuration error
    [ERROR] Failed to create Docker repository
    ```
+
    - **This is normal!** Repository is created, but EULA not accepted
    - Solution: accept EULA via web interface
 
